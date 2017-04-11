@@ -1,0 +1,23 @@
+{
+  "name": "spmx",
+  "version": "0.0.1",
+  "description": "npm-like extensions for the Swift CLI",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/randymarsh77/spmx.git"
+  },
+  "keywords": [
+    "npm",
+    "swift"
+  ],
+  "author": "Matt Preucil",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/randymarsh77/spmx/issues"
+  },
+  "homepage": "https://github.com/randymarsh77/spmx#readme"
+}
