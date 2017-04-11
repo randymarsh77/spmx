@@ -8,4 +8,4 @@ Nothing yet.
 # Roadmap
 
 - Add `link` using a global-per-user `.spmx` json registry
-- Consider installing this tool as an override of `swift` and proxying all non-extension commands
+- Consider installing this tool as an override of `swift` and proxying all non-extension commands. Alternatively, just install as `spm`.
