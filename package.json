@@ -19,5 +19,8 @@
   "bugs": {
     "url": "https://github.com/randymarsh77/spmx/issues"
   },
-  "homepage": "https://github.com/randymarsh77/spmx#readme"
+  "homepage": "https://github.com/randymarsh77/spmx#readme",
+  "devDependencies": {
+    "webpack": "^2.3.3"
+  }
 }
