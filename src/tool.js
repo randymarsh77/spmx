@@ -8,12 +8,12 @@ module.exports = {
 		],
 		usage: [
 			{
-				header: 'spmx',
+				header: 'swiftx',
 				content: 'Extensions for Swift Package Manager',
 			},
 			{
 				header: 'synopsis',
-				content: '$ spmx <options> <command>'
+				content: '$ swiftx <options> <command>'
 			},
 			{
 				header: 'Command List',
@@ -29,12 +29,12 @@ module.exports = {
 		definitions: [],
 		usage: [
 			{
-				header: 'spmx help',
+				header: 'swiftx help',
 				content: 'Get some help for a command',
 			},
 			{
 				header: 'synopsis',
-				content: '$ spmx help <command>'
+				content: '$ swiftx help <command>'
 			},
 		],
 		validate: ({ argv, tool }) => argv && ((argv.length === 1 && argv[0] && tool[argv[0]]) || argv.length == 0),
@@ -46,12 +46,12 @@ module.exports = {
 		],
 		usage: [
 			{
-				header: 'spmx update-build-config',
+				header: 'swiftx update-build-config',
 				content: 'Update the thing'
 			},
 			{
 				header: 'synopsis',
-				content: '$ spmx update-build-config <options>'
+				content: '$ swiftx update-build-config <options>'
 			}
 		],
 		execute: (options) => updateBuildConfig(),
@@ -62,12 +62,12 @@ module.exports = {
 		],
 		usage: [
 			{
-				header: 'spmx trigger-downstream-builds',
+				header: 'swiftx trigger-downstream-builds',
 				content: 'Trigger the builds'
 			},
 			{
 				header: 'synopsis',
-				content: '$ spmx trigger-downstream-builds <options> [--provider] <provider>'
+				content: '$ swiftx trigger-downstream-builds <options> [--provider] <provider>'
 			}
 		]
 	}

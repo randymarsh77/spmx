@@ -1,8 +1,8 @@
-#!/usr/bin/env babel-node
+#!/usr/bin/env node
 
 import commands from 'command-line-commands';
 import createOptions from 'command-line-args';
-import tool from './src/tool';
+import tool from './tool';
 
 const { command, argv } = commands([ null, 'help', 'update-build-config', 'trigger-downstream-builds' ]);
 const cmd = tool[command];

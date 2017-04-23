@@ -2,10 +2,11 @@
   "name": "swiftx",
   "version": "0.0.1",
   "description": "Extensions for Swift dev",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "bin": "./dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "babel-node index.js"
+    "build": "rimraf dist && babel src --out-dir dist"
   },
   "repository": {
     "type": "git",
@@ -28,6 +29,7 @@
     "babel-preset-stage-0": "^6.24.1",
     "eslint": "^3.19.0",
     "eslint-config-airbnb-base": "^11.1.3",
+    "rimraf": "^2.6.1",
     "webpack": "^2.3.3"
   },
   "dependencies": {
