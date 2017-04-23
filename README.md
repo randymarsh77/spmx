@@ -9,4 +9,4 @@ Nothing yet. Working on Travis-CI integrations for automatically triggering down
 
 - Build configuration and management for downstream/upstream relationships
 - Add `link` using a global-per-user `.swiftx` json registry
- - Xcode handles symlinked pacakges, `swift build` does not. Might have to get trixy with this one.
+  - Xcode handles symlinked pacakges, `swift build` does not. Might have to get trixy with this one.
