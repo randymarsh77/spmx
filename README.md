@@ -1,11 +1,12 @@
-# spmx
-npm-like extensions for the Swift CLI
+# swiftx
+An npm-installable CLI that provides some extra tooling and infrastructure for Swift dev.
 
 # Status
 
-Nothing yet.
+Nothing yet. Working on Travis-CI integrations for automatically triggering downstream builds.
 
 # Roadmap
 
-- Add `link` using a global-per-user `.spmx` json registry
-- Consider installing this tool as an override of `swift` and proxying all non-extension commands. Alternatively, just install as `spm`.
+- Build configuration and management for downstream/upstream relationships
+- Add `link` using a global-per-user `.swiftx` json registry
+ - Xcode handles symlinked pacakges, `swift build` does not. Might have to get trixy with this one.
