@@ -1,4 +1,5 @@
 import createUsage from 'command-line-usage';
+import pckg from '../package.json';
 import updateBuildConfig from './commands/update-build-config';
 
 module.exports = {
@@ -23,7 +24,7 @@ module.exports = {
 				],
 			}
 		],
-		execute: ({ options, tool }) => console.log(options.version ? '0.0.1' : createUsage(tool[null].usage))
+		execute: ({ options, tool }) => console.log(options.version ? pckg.version : createUsage(tool[null].usage))
 	},
 	'help': {
 		definitions: [],
