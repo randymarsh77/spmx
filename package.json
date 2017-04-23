@@ -4,6 +4,7 @@
   "description": "Extensions for Swift dev",
   "main": "dist/index.js",
   "bin": "./dist/index.js",
+  "files": [ "dist" ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rimraf dist && babel src --out-dir dist"
