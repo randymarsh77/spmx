@@ -32,6 +32,7 @@ function parseDependencies(allowablePrefixes = [testPrefix]) {
 }
 
 function getConfig({ repo }) {
+	// get tree with configRepo
 	return {
 		downstream: [
 			{ repo },
@@ -39,30 +40,35 @@ function getConfig({ repo }) {
 	};
 }
 
+// return git tree
 function createOrUpdateConfig() {
 }
 
-export default function updateBuildConfig({ downstreamRepo, configRepo, allowableSourcePrefix }) {
-	return parseDependencies()
-		.then(dependencies => dependencies
-			.filter(x => !allowableSourcePrefix || x.source.startsWith(allowableSourcePrefix)))
-		.then(dependencies => {
-			dependencies.forEach(x => {
-				const existingConfig = getConfig({ repo: x, configRepo });
-				const downstream = [...existingConfig.downstream
-					.filter(y => y.source !== downstreamRepo),
-					{ repo: downstreamRepo },
-				];
-				const updatedConfig = {
-					...existingConfig,
-					downstream,
-				};
-				createOrUpdateConfig(x, updatedConfig);
-			});
-			return {
-				code: 0,
-			};
-		});
+export default function updateBuildConfig({ downstreamRepo, configRepo, allowableSourcePrefixes }) {
+	return parseDependencies(allowableSourcePrefixes)
+		.then(dependencies =>
+			Promise.all(dependencies.forEach(repo =>
+				getConfig({ repo, configRepo })
+					.then(config => {
+						const downstream = [
+							...config.downstream
+								.filter(y => y.source !== downstreamRepo),
+							{ repo: downstreamRepo },
+						];
+						const updatedConfig = {
+							...config,
+							downstream,
+						};
+						// create tree
+						return { updatedConfig };
+					})
+					.then(({ tree, config }) => createOrUpdateConfig(tree, config)))))
+		.then(() => {
+			// create commit and push
+		})
+		.then(() => ({
+			code: 0,
+		}));
 }
 
 //
