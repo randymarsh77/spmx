@@ -1,7 +1,40 @@
+import fs from 'fs';
+// import github from 'github';
 
-export default function updateBuildConfig()
-{
-	console.log('update test');
+function parseDependencies() {
+	const swiftPackage = fs.readFileSync('Package.Swift', 'utf8');
+	console.log('package: ', swiftPackage);
+	return [
+		{ source: 'someRepo' },
+	];
+}
+
+function getConfig({ repo }) {
+	return {
+		downstream: [
+			{ repo },
+		],
+	};
+}
+
+function createOrUpdateConfig() {
+}
+
+export default function updateBuildConfig({ downstreamRepo, configRepo, allowableSourcePrefix }) {
+	const dependencies = parseDependencies()
+		.filter(x => !allowableSourcePrefix || x.source.startsWith(allowableSourcePrefix));
+	dependencies.forEach(x => {
+		const existingConfig = getConfig({ repo: x, configRepo });
+		const downstream = [...existingConfig.downstream
+			.filter(y => y.source !== downstreamRepo),
+			{ repo: downstreamRepo },
+		];
+		const updatedConfig = {
+			...existingConfig,
+			downstream,
+		};
+		createOrUpdateConfig(x, updatedConfig);
+	});
 }
 
 //
