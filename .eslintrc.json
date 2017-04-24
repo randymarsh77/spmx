@@ -12,6 +12,7 @@
     "indent": [2, "tab"],
     "class-methods-use-this": 0,
     "no-console": "off",
-    "arrow-parens":"off"
+    "arrow-parens":"off",
+    "no-useless-escape":"off"
   }
 }

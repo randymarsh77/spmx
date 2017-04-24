@@ -1,7 +1,12 @@
 import fs from 'fs';
 // import github from 'github';
 
-function parseDependencies() {
+const testPrefix = {
+	prefix: 'https:\/\/github\.com\/randymarsh77\/',
+	getUrl: (pre, match) => `${pre}${match}`,
+};
+
+function parseDependencies(allowablePrefixes = [testPrefix]) {
 	const promise = new Promise((resolve, reject) => {
 		fs.readFile('Package.swift', 'utf8', (err, data) => {
 			if (err) reject(err);
@@ -10,10 +15,19 @@ function parseDependencies() {
 	});
 	return promise
 		.then(text => {
-			console.log(text);
-			return [
-				{ source: 'someRepo' },
-			];
+			const repos = [];
+			allowablePrefixes.forEach(({ prefix, getUrl }) => {
+				const re = new RegExp(`\.Package[ ]*.*${prefix}([a-zA-Z0-9]*)`, 'g');
+				let match = re.exec(text);
+				while (match != null) {
+					repos.push({
+						source: getUrl(prefix, match[1]),
+					});
+					match = re.exec(text);
+				}
+			});
+			console.log(repos);
+			return repos;
 		});
 }
 
