@@ -2,11 +2,19 @@ import fs from 'fs';
 // import github from 'github';
 
 function parseDependencies() {
-	const swiftPackage = fs.readFileSync('Package.Swift', 'utf8');
-	console.log('package: ', swiftPackage);
-	return [
-		{ source: 'someRepo' },
-	];
+	const promise = new Promise((resolve, reject) => {
+		fs.readFile('Package.swift', 'utf8', (err, data) => {
+			if (err) reject(err);
+			resolve(data);
+		});
+	});
+	return promise
+		.then(text => {
+			console.log(text);
+			return [
+				{ source: 'someRepo' },
+			];
+		});
 }
 
 function getConfig({ repo }) {
@@ -21,20 +29,26 @@ function createOrUpdateConfig() {
 }
 
 export default function updateBuildConfig({ downstreamRepo, configRepo, allowableSourcePrefix }) {
-	const dependencies = parseDependencies()
-		.filter(x => !allowableSourcePrefix || x.source.startsWith(allowableSourcePrefix));
-	dependencies.forEach(x => {
-		const existingConfig = getConfig({ repo: x, configRepo });
-		const downstream = [...existingConfig.downstream
-			.filter(y => y.source !== downstreamRepo),
-			{ repo: downstreamRepo },
-		];
-		const updatedConfig = {
-			...existingConfig,
-			downstream,
-		};
-		createOrUpdateConfig(x, updatedConfig);
-	});
+	return parseDependencies()
+		.then(dependencies => dependencies
+			.filter(x => !allowableSourcePrefix || x.source.startsWith(allowableSourcePrefix)))
+		.then(dependencies => {
+			dependencies.forEach(x => {
+				const existingConfig = getConfig({ repo: x, configRepo });
+				const downstream = [...existingConfig.downstream
+					.filter(y => y.source !== downstreamRepo),
+					{ repo: downstreamRepo },
+				];
+				const updatedConfig = {
+					...existingConfig,
+					downstream,
+				};
+				createOrUpdateConfig(x, updatedConfig);
+			});
+			return {
+				code: 0,
+			};
+		});
 }
 
 //
