@@ -4,12 +4,15 @@ import commands from 'command-line-commands';
 import createOptions from 'command-line-args';
 import tool from './tool';
 
+let isDebug = false;
+
 Promise.resolve()
 	.then(() => {
 		const { command, argv } = commands([null, 'help', 'update-build-config', 'trigger-downstream-builds']);
 		const cmd = tool[command];
 		const options = createOptions(cmd.definitions, argv);
 		const context = { options, argv, tool };
+		isDebug = options.debug;
 		return { cmd, context };
 	})
 	.then(({ cmd, context }) => (!cmd.validate || cmd.validate(context)) && { cmd, context })
@@ -23,5 +26,8 @@ Promise.resolve()
 	})
 	.catch(error => {
 		console.error(error.message);
+		if (isDebug) {
+			console.error(error);
+		}
 		process.exit(1);
 	});

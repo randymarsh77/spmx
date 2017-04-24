@@ -2,9 +2,14 @@ import createUsage from 'command-line-usage';
 import pckg from '../package.json';
 import updateBuildConfig from './commands/update-build-config';
 
+const globalOptions = [
+	{ name: 'debug', alias: 'd', type: Boolean, description: 'Run in debug mode.' },
+];
+
 module.exports = {
 	null: {
 		definitions: [
+			...globalOptions,
 			{ name: 'version', alias: 'v', type: Boolean, description: 'Print the version number.' },
 		],
 		usage: [
@@ -33,7 +38,7 @@ module.exports = {
 		},
 	},
 	help: {
-		definitions: [],
+		definitions: [...globalOptions],
 		usage: [
 			{
 				header: 'swiftx help',
@@ -65,6 +70,7 @@ module.exports = {
 	},
 	'update-build-config': {
 		definitions: [
+			...globalOptions,
 			{ name: 'repo', type: String, description: 'The build config repo' },
 		],
 		usage: [
@@ -81,6 +87,7 @@ module.exports = {
 	},
 	'trigger-downstream-builds': {
 		definitions: [
+			...globalOptions,
 			{ name: 'provider', alias: 'p', type: String, description: 'Only accepts "travis" for now.' },
 		],
 		usage: [
