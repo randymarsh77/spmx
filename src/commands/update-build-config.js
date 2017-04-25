@@ -1,12 +1,10 @@
 import fs from 'fs';
-// import github from 'github';
+import github from 'github';
+import base64 from 'base-64';
 
-const testPrefix = {
-	prefix: 'https:\/\/github\.com\/randymarsh77\/',
-	getUrl: (pre, match) => `${pre}${match}`,
-};
+const git = github();
 
-function parseDependencies(allowablePrefixes = [testPrefix]) {
+function parseDependencies(owner) {
 	const promise = new Promise((resolve, reject) => {
 		fs.readFile('Package.swift', 'utf8', (err, data) => {
 			if (err) reject(err);
@@ -15,75 +13,61 @@ function parseDependencies(allowablePrefixes = [testPrefix]) {
 	});
 	return promise
 		.then(text => {
-			const repos = [];
-			allowablePrefixes.forEach(({ prefix, getUrl }) => {
+			const dependencies = [];
+			[owner].forEach(x => {
+				const prefix = `https:\/\/github\.com\/${x}\/`;
 				const re = new RegExp(`\.Package[ ]*.*${prefix}([a-zA-Z0-9]*)`, 'g');
 				let match = re.exec(text);
 				while (match != null) {
-					repos.push({
-						source: getUrl(prefix, match[1]),
+					dependencies.push({
+						name: match[1],
+						source: `${prefix}${match[1]}`,
 					});
 					match = re.exec(text);
 				}
 			});
-			console.log(repos);
-			return repos;
+			return dependencies;
 		});
 }
 
-function getConfig({ repo }) {
-	// get tree with configRepo
-	return {
-		downstream: [
-			{ repo },
-		],
-	};
+function createConfig(owner, name) {
+	return Promise.resolve({
+		name,
+		source: `https://github.com/${owner}/${name}`,
+	});
 }
 
-// return git tree
-function createOrUpdateConfig() {
+function getBlobContent(request) {
+	return git.gitdata.getBlob(request)
+		.then(result => JSON.parse(base64.decode(result.data.content)));
 }
 
-export default function updateBuildConfig({ downstreamRepo, configRepo, allowableSourcePrefixes }) {
-	return parseDependencies(allowableSourcePrefixes)
-		.then(dependencies =>
-			Promise.all(dependencies.forEach(repo =>
-				getConfig({ repo, configRepo })
-					.then(config => {
-						const downstream = [
-							...config.downstream
-								.filter(y => y.source !== downstreamRepo),
-							{ repo: downstreamRepo },
-						];
-						const updatedConfig = {
-							...config,
-							downstream,
-						};
-						// create tree
-						return { updatedConfig };
-					})
-					.then(({ tree, config }) => createOrUpdateConfig(tree, config)))))
-		.then(() => {
-			// create commit and push
+function getConfigs({ dependencies, owner, configPath }) {
+	const pathComponents = configPath.split('/');
+	const repo = pathComponents[0];
+	const basePath = pathComponents.length > 1 ? pathComponents.slice(1).join('/') : '';
+	return git.gitdata.getReference({ owner, repo, ref: 'heads/master' })
+		.then(head => git.gitdata.getTree({ owner, repo, sha: head.data.object.sha, recursive: true }))
+		.then(treeResult => Promise.all(dependencies.map(x => {
+			const { name } = x;
+			const blobMeta = treeResult.data.tree.find(y => y.path === `${basePath}/${name}.json`);
+			return !blobMeta ?
+				createConfig(owner, name) :
+				getBlobContent({ owner, repo, sha: blobMeta.sha });
+		})));
+}
+
+export default function updateBuildConfig({ owner, configPath }) {
+	return parseDependencies(owner)
+		.then(dependencies => getConfigs({ dependencies, owner, configPath }))
+		.then(configs => {
+			console.log('got configs: ', configs);
+			// TODO
+			// ... update them with downstream info, if needed
+			// ... get self config, update lastTriggered to ensure we have a commit
+			// ... commit all configs
 		})
 		.then(() => ({
 			code: 0,
 		}));
 }
-
-//
-// update build config
-//
-// parse package.swift
-// get upstream repos and versions (for packages wth allowable source prefix)
-// clone build repo, or get or create each file at /{repo}/{upstream}.json via api, ideally
-// update to {
-//   repo: {upstream},
-//   ...,
-//   downstream: [
-//	   { repo: {self} }
-//   ],
-// }
-//
-// push to build repo, or use api
-//

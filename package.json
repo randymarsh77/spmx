@@ -38,6 +38,7 @@
     "webpack": "^2.3.3"
   },
   "dependencies": {
+    "base-64": "^0.1.0",
     "command-line-args": "^4.0.3",
     "command-line-commands": "^2.0.0",
     "command-line-usage": "^4.0.0",

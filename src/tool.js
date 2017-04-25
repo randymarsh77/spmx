@@ -71,7 +71,8 @@ module.exports = {
 	'update-build-config': {
 		definitions: [
 			...globalOptions,
-			{ name: 'repo', type: String, description: 'The build config repo' },
+			{ name: 'owner', type: String, description: 'The github owner; Currently only supports single owners/orgs.' },
+			{ name: 'configPath', type: String, description: 'The build config repo and subpath. Example: "builds/swift/config" will look for name.json in the builds repo at the path swift/config/name.json.' },
 		],
 		usage: [
 			{
@@ -83,6 +84,12 @@ module.exports = {
 				content: '$ swiftx update-build-config <options>',
 			},
 		],
+		validate: ({ options }) => {
+			const { owner, configPath } = options;
+			if (!owner) throw new Error('Must include the owner option.');
+			if (!configPath) throw new Error('Must include the configPath option.');
+			return true;
+		},
 		execute: ({ options }) => updateBuildConfig(options),
 	},
 	'trigger-downstream-builds': {
