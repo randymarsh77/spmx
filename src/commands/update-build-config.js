@@ -39,7 +39,7 @@ function parsePackage(owner) {
 }
 
 function createConfig({ owner, repo, name, downstream }, expectedPath) {
-	console.log('Creating config at ', expectedPath);
+	console.log('Creating config at', expectedPath);
 	return Promise.resolve({
 		name,
 		source: `https://github.com/${owner}/${name}`,
@@ -51,7 +51,7 @@ function createConfig({ owner, repo, name, downstream }, expectedPath) {
 		message: `[SWIFTX-BOT] Adding config for ${name}`,
 		content: base64.encode(JSON.stringify(config, null, '	')),
 	})).then(result => {
-		console.log('Created config for ', name);
+		console.log('  ... Success', name);
 		console.log(result);
 	});
 }
@@ -71,7 +71,7 @@ function updateConfig({ owner, repo }, pkg, blobPath) {
 			const needsReference = pkg.dependencies.find(x => x.name === config.name);
 			const hasReference = config.downstream.find(x => x.name === pkg.name);
 			if (needsReference && !hasReference) {
-				console.log('  Adding reference...');
+				console.log('  ... Adding reference');
 				return {
 					config: {
 						...config,
@@ -83,7 +83,7 @@ function updateConfig({ owner, repo }, pkg, blobPath) {
 					sha,
 				};
 			} else if (!needsReference && hasReference) {
-				console.log('  Removing reference...');
+				console.log('  ... Removing reference');
 				return {
 					config: {
 						...config,
@@ -92,7 +92,7 @@ function updateConfig({ owner, repo }, pkg, blobPath) {
 					sha,
 				};
 			}
-			console.log('  Skipping...');
+			console.log('  ... Skipping');
 			return {};
 		})
 		.then(({ config, sha }) => (config ? git.repos.updateFile({
@@ -105,15 +105,12 @@ function updateConfig({ owner, repo }, pkg, blobPath) {
 		}) : null))
 		.then(result => {
 			if (result) {
-				console.log('Updated config with ', pkg.name);
+				console.log('Updated config with', pkg.name);
 			}
 		});
 }
 
 function processPackage({ pkg, owner, configPath }) {
-	// All configs in the repo, in case we need to remove downstream dependencies
-	// All dependencies, to create or update exsiting configs
-	// Processing must happen sequentially so we always deal with the most up-to-date refs
 	const pathComponents = configPath.split('/');
 	const repo = pathComponents[0];
 	const basePath = pathComponents.length > 1 ? pathComponents.slice(1).join('/') : '';
@@ -132,7 +129,9 @@ function processPackage({ pkg, owner, configPath }) {
 		})
 		.then(processedConfigPaths => {
 			const missingConfigs = pkg.dependencies.filter(x => !processedConfigPaths.find(y => y === `${basePath}/${x.name}.json`));
-			return Promise.all(missingConfigs.map(x => createConfig({ owner, repo, name: x.name, downstream: [{ name: pkg.name }] }, `${basePath}/${x.name}.json`)));
+			const createPromise = missingConfigs.reduce((acc, x) => acc.then(() =>
+				createConfig({ owner, repo, name: x.name, downstream: [{ name: pkg.name }] }, `${basePath}/${x.name}.json`)), Promise.resolve());
+			return createPromise;
 		});
 }
 
