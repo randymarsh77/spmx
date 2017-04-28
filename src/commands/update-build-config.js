@@ -24,7 +24,7 @@ function createConfig({ owner, repo, name, downstream }, expectedPath) {
 		repo,
 		path: expectedPath,
 		message: `[SWIFTX-BOT] Adding config for ${name}`,
-		content: base64.encode(JSON.stringify(config, null, '	')),
+		content: base64.encode(`${JSON.stringify(config, null, '	')}\n`),
 	})).then(result => {
 		console.log('  ... Success', name);
 		console.log(result);
@@ -75,7 +75,7 @@ function updateConfig({ owner, repo }, pkg, blobPath) {
 			repo,
 			path: blobPath,
 			message: `[SWIFTX-BOT] Adding ${pkg.name} as a dependency to ${config.name}`,
-			content: base64.encode(JSON.stringify(config, null, '	')),
+			content: base64.encode(`${JSON.stringify(config, null, '	')}\n`),
 			sha,
 		}) : null))
 		.then(result => {
