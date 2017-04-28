@@ -1,5 +1,6 @@
 import createUsage from 'command-line-usage';
-import pckg from '../package.json';
+import pkg from '../package.json';
+import triggerDownstreamBuilds from './commands/trigger-downstream-builds';
 import updateBuildConfig from './commands/update-build-config';
 
 const globalOptions = [
@@ -31,7 +32,7 @@ module.exports = {
 			},
 		],
 		execute: ({ options, tool }) => {
-			console.log(options.version ? pckg.version : createUsage(tool.null.usage));
+			console.log(options.version ? pkg.version : createUsage(tool.null.usage));
 			return Promise.resolve({
 				code: 0,
 			});
@@ -95,7 +96,8 @@ module.exports = {
 	'trigger-downstream-builds': {
 		definitions: [
 			...globalOptions,
-			{ name: 'provider', alias: 'p', type: String, description: 'Only accepts "travis" for now.' },
+			{ name: 'owner', type: String, description: 'The github owner; Currently only supports single owners/orgs.' },
+			{ name: 'configPath', type: String, description: 'The build config repo and subpath. Example: "builds/swift/config" will look for name.json in the builds repo at the path swift/config/name.json.' },
 		],
 		usage: [
 			{
@@ -104,12 +106,15 @@ module.exports = {
 			},
 			{
 				header: 'Synopsis',
-				content: '$ swiftx trigger-downstream-builds <options> [--provider] <provider>',
+				content: '$ swiftx trigger-downstream-builds <options>',
 			},
 		],
-		execute: () => Promise.resolve()
-			.then(() => {
-				throw new Error('"trigger-downstream-builds" is not implemented yet :(');
-			}),
+		validate: ({ options }) => {
+			const { owner, configPath } = options;
+			if (!owner) throw new Error('Must include the owner option.');
+			if (!configPath) throw new Error('Must include the configPath option.');
+			return true;
+		},
+		execute: ({ options }) => triggerDownstreamBuilds(options),
 	},
 };
