@@ -103,9 +103,14 @@ function processPackage({ pkg, owner, configPath }) {
 			return updatePromise.then(() => processedConfigPaths);
 		})
 		.then(processedConfigPaths => {
-			const missingConfigs = pkg.dependencies.filter(x => !processedConfigPaths.find(y => y === `${basePath}/${x.name}.json`));
-			const createPromise = missingConfigs.reduce((acc, x) => acc.then(() =>
+			const missingConfigs = pkg.dependencies
+				.filter(x => !processedConfigPaths.find(y => y === `${basePath}/${x.name}.json`));
+			let createPromise = missingConfigs.reduce((acc, x) => acc.then(() =>
 				createConfig({ owner, repo, name: x.name, downstream: [{ name: pkg.name, build }] }, `${basePath}/${x.name}.json`)), Promise.resolve());
+			if (missingConfigs.find(x => x === `${basePath}/${pkg.name}.json`)) {
+				createPromise = createPromise.then(() =>
+					createConfig({ owner, repo, name: pkg.name, downstream: [] }, `${basePath}/${pkg.name}.json`));
+			}
 			return createPromise;
 		});
 }
