@@ -1,6 +1,6 @@
-import fs from 'fs';
-import github from 'github';
 import base64 from 'base-64';
+import github from 'github';
+import parsePackage from './utility/swift';
 
 const headers = {};
 if (process.env.GitHubToken) {
@@ -8,34 +8,9 @@ if (process.env.GitHubToken) {
 }
 const git = github({ headers });
 
-function parsePackage(owner) {
-	const promise = new Promise((resolve, reject) => {
-		fs.readFile('Package.swift', 'utf8', (err, data) => {
-			if (err) reject(err);
-			resolve(data);
-		});
-	});
-	return promise
-		.then(text => {
-			const name = (new RegExp('name[ ]*:[ ]*"([a-zA-Z0-9]*)"')).exec(text)[1];
-			const dependencies = [];
-			[owner].forEach(x => {
-				const prefix = `https:\/\/github\.com\/${x}\/`;
-				const re = new RegExp(`\.Package[ ]*.*${prefix}([a-zA-Z0-9]*)`, 'g');
-				let match = re.exec(text);
-				while (match != null) {
-					dependencies.push({
-						name: match[1],
-						source: `${prefix}${match[1]}`,
-					});
-					match = re.exec(text);
-				}
-			});
-			return {
-				name,
-				dependencies,
-			};
-		});
+const build = {};
+if (process.env.TRAVIS_REPO_SLUG) {
+	build.travis = process.env.TRAVIS_REPO_SLUG;
 }
 
 function createConfig({ owner, repo, name, downstream }, expectedPath) {
@@ -77,7 +52,7 @@ function updateConfig({ owner, repo }, pkg, blobPath) {
 						...config,
 						downstream: [
 							...config.downstream,
-							{ name: pkg.name },
+							{ name: pkg.name, build },
 						],
 					},
 					sha,
@@ -130,7 +105,7 @@ function processPackage({ pkg, owner, configPath }) {
 		.then(processedConfigPaths => {
 			const missingConfigs = pkg.dependencies.filter(x => !processedConfigPaths.find(y => y === `${basePath}/${x.name}.json`));
 			const createPromise = missingConfigs.reduce((acc, x) => acc.then(() =>
-				createConfig({ owner, repo, name: x.name, downstream: [{ name: pkg.name }] }, `${basePath}/${x.name}.json`)), Promise.resolve());
+				createConfig({ owner, repo, name: x.name, downstream: [{ name: pkg.name, build }] }, `${basePath}/${x.name}.json`)), Promise.resolve());
 			return createPromise;
 		});
 }

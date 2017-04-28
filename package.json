@@ -43,6 +43,7 @@
     "command-line-commands": "^2.0.0",
     "command-line-usage": "^4.0.0",
     "fs": "^0.0.1-security",
-    "github": "^9.2.0"
+    "github": "^9.2.0",
+    "node-fetch": "^1.6.3"
   }
 }
