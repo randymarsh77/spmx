@@ -18,9 +18,9 @@ function getConfig({ pkg, owner, configPath }) {
 	const pathComponents = configPath.split('/');
 	const repo = pathComponents[0];
 	const basePath = pathComponents.length > 1 ? pathComponents.slice(1).join('/') : '';
-	git.gitdata.getReference({ owner, repo, ref: 'heads/master' })
+	return git.gitdata.getReference({ owner, repo, ref: 'heads/master' })
 		.then(head => git.gitdata.getTree({ owner, repo, sha: head.data.object.sha, recursive: true }))
-		.then(treeResult => treeResult.data.tree.find(x => x.path === `${basePath}/${pkg.name}`))
+		.then(treeResult => treeResult.data.tree.find(x => x.path.toLowerCase() === `${basePath}/${pkg.name}.json`.toLowerCase()))
 		.then(({ sha }) => getBlobContent({ owner, repo, sha }));
 }
 
@@ -31,7 +31,7 @@ function trigger({ name, build }) {
 		return Promise.resolve();
 	}
 	console.log(`Triggering ${name}`);
-	return fetch(`https://api.travis-ci.org/repo/${travis}/requests`, {
+	return fetch(`https://api.travis-ci.org/repo/${encodeURIComponent(travis)}/requests`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
