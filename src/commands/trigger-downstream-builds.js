@@ -1,52 +1,41 @@
-import base64 from 'base-64';
-import fetch from 'node-fetch';
-import github from 'github';
-import parsePackage from './utility/swift';
+import triggerBuild from './utility/travis';
+import { parsePackage } from './utility/swift';
+import { getConfig } from './utility/config';
 
-const headers = {};
-if (process.env.GitHubToken) {
-	headers.Authorization = `token ${process.env.GitHubToken}`;
-}
-const git = github({ headers });
-
-function getBlobContent(request) {
-	return git.gitdata.getBlob(request)
-		.then(result => JSON.parse(base64.decode(result.data.content)));
-}
-
-function getConfig({ pkg, owner, configPath }) {
-	const pathComponents = configPath.split('/');
-	const repo = pathComponents[0];
-	const basePath = pathComponents.length > 1 ? pathComponents.slice(1).join('/') : '';
-	return git.gitdata.getReference({ owner, repo, ref: 'heads/master' })
-		.then(head => git.gitdata.getTree({ owner, repo, sha: head.data.object.sha, recursive: true }))
-		.then(treeResult => treeResult.data.tree.find(x => x.path.toLowerCase() === `${basePath}/${pkg.name}.json`.toLowerCase()))
-		.then(({ sha }) => getBlobContent({ owner, repo, sha }));
-}
-
-function trigger({ name, build }) {
-	const { travis, branch } = build;
+function trigger({ name, build }, owner, configPath, source) {
+	const { travis } = build;
 	if (!travis) {
-		console.log(`Skipping triggering ${name}; No travis slug.`);
+		console.log(`Skipping trigger for ${name}; No travis slug.`);
 		return Promise.resolve();
 	}
-	console.log(`Triggering ${name}`);
-	return fetch(`https://api.travis-ci.org/repo/${encodeURIComponent(travis)}/requests`, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			Accept: 'application/json',
-			'Travis-API-Version': '3',
-			Authorization: `token ${process.env.TravisToken}`,
-		},
-		body: `{"request": {"branch":"${branch || 'master'}"}}`,
-	});
+	console.log(`Evaluating status of ${name}`);
+	return getConfig({ owner, configPath, name })
+		.then(config => {
+			if (!config) {
+				console.log('  ... No existing config; Triggering...');
+				return triggerBuild(travis);
+			}
+			return config.getContent()
+				.then(content => {
+					const lastBuiltSha = (content.upstream.find(x => x.name === source) || {}).sha;
+					const currentSha = 'fromTravisBuild?';
+					if (currentSha !== lastBuiltSha) {
+						console.log('  ... Out of date; Triggering...');
+						return triggerBuild(travis);
+					}
+					console.log('  ... Up to date; Skipping trigger.');
+					return Promise.resolve();
+				});
+		});
 }
 
 export default function triggerDownstreamBuilds({ owner, configPath }) {
 	return parsePackage()
-		.then(pkg => getConfig({ pkg, owner, configPath }))
-		.then(config => Promise.all((config.downstream || []).map(x => trigger(x))))
+		.then(pkg => getConfig({ name: pkg.name, owner, configPath }))
+		.then(config => config.getContent())
+		.then(content =>
+			(content.downstream || []).reduce((acc, v) =>
+				acc.then(() => trigger(v, owner, configPath, content.name), Promise.resolve())))
 		.then(() => ({
 			code: 0,
 		}));

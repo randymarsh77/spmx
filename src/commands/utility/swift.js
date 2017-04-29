@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-export default function parsePackage(owner) {
+export function parsePackage(owner) {
 	const promise = new Promise((resolve, reject) => {
 		fs.readFile('Package.swift', 'utf8', (err, data) => {
 			if (err) reject(err);
@@ -28,4 +28,12 @@ export default function parsePackage(owner) {
 				dependencies,
 			};
 		});
+}
+
+export function getResolvedPackageShas() {
+	throw Error('getResolvedPackageShas not implemented.');
+	// return {
+	// 	name: 'name',
+	// 	sha: 'sha',
+	// };
 }
