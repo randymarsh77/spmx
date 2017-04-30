@@ -1,3 +1,4 @@
+import { globalOptions, repoOptions } from './shared/options';
 import { parsePackage, getResolvedPackageShas } from './utility/swift';
 import { createConfig, getConfig, publishNewConfig, isConfigContentEquivalent } from './utility/config';
 
@@ -31,7 +32,7 @@ function updateConfig({ config, pkg, shas }) {
 		});
 }
 
-export default function updateBuildConfig({ owner, configPath }) {
+function updateBuildConfig({ owner, configPath }) {
 	return parsePackage(owner)
 		.then(pkg => getResolvedPackageShas(pkg).then(shas => ({ shas, pkg })))
 		.then(({ shas, pkg }) => getOrCreateConfig({ pkg, owner, configPath, shas })
@@ -41,3 +42,27 @@ export default function updateBuildConfig({ owner, configPath }) {
 			code: 0,
 		}));
 }
+
+const name = 'update-build-config';
+const summary = 'Updates the state of upstream dependencies registered for this repository based on the local filesystem.';
+
+module.exports = {
+	name,
+	summary,
+	definitions: [
+		...globalOptions.options,
+		...repoOptions.options,
+	],
+	usage: [
+		{
+			header: `swiftx ${name}`,
+			content: summary,
+		},
+		{
+			header: 'Synopsis',
+			content: `$ swiftx ${name} <options>`,
+		},
+	],
+	validate: repoOptions.validate,
+	execute: ({ options }) => updateBuildConfig(options),
+};

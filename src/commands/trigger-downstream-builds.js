@@ -1,3 +1,4 @@
+import { globalOptions, repoOptions } from './shared/options';
 import triggerBuild from './utility/travis';
 import { parsePackage } from './utility/swift';
 import { getConfig } from './utility/config';
@@ -29,7 +30,7 @@ function trigger({ name, build }, owner, configPath, source) {
 		});
 }
 
-export default function triggerDownstreamBuilds({ owner, configPath }) {
+function triggerDownstreamBuilds({ owner, configPath }) {
 	return parsePackage()
 		.then(pkg => getConfig({ name: pkg.name, owner, configPath }))
 		.then(config => config.getContent())
@@ -40,3 +41,27 @@ export default function triggerDownstreamBuilds({ owner, configPath }) {
 			code: 0,
 		}));
 }
+
+const name = 'trigger-downstream-builds';
+const summary = 'Triggers builds for registered downstream dependencies if the state of the source repository would result in a different state from that which has been registered in the downstream repository configuration in a new build of the dependency.';
+
+module.exports = {
+	name,
+	summary,
+	definitions: [
+		...globalOptions.options,
+		...repoOptions.options,
+	],
+	usage: [
+		{
+			header: `swiftx ${name}`,
+			content: summary,
+		},
+		{
+			header: 'Synopsis',
+			content: `$ swiftx ${name} <options>`,
+		},
+	],
+	validate: repoOptions.validate,
+	execute: ({ options }) => triggerDownstreamBuilds(options),
+};

@@ -1,3 +1,4 @@
+import { globalOptions, repoOptions } from './shared/options';
 import { parsePackage } from './utility/swift';
 import { createConfig, getAllConfigs, publishNewConfig } from './utility/config';
 
@@ -64,7 +65,7 @@ function getOrCreateDependentConfigs({ pkg, owner, configPath }) {
 		}));
 }
 
-export default function updateDependencyMap({ owner, configPath }) {
+function updateDependencyGraph({ owner, configPath }) {
 	return parsePackage(owner)
 		.then(pkg => getOrCreateDependentConfigs({ pkg, owner, configPath })
 			.then(configs => ({ configs, pkg })))
@@ -74,3 +75,27 @@ export default function updateDependencyMap({ owner, configPath }) {
 			code: 0,
 		}));
 }
+
+const name = 'update-dependency-graph';
+const summary = 'Registers this repository as a downstream dependency of the repositories associated with the code\'s dependencies.';
+
+module.exports = {
+	name,
+	summary,
+	definitions: [
+		...globalOptions.options,
+		...repoOptions.options,
+	],
+	usage: [
+		{
+			header: `swiftx ${name}`,
+			content: summary,
+		},
+		{
+			header: 'Synopsis',
+			content: `$ swiftx ${name} <options>`,
+		},
+	],
+	validate: repoOptions.validate,
+	execute: ({ options }) => updateDependencyGraph(options),
+};

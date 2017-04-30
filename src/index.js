@@ -8,7 +8,7 @@ let isDebug = false;
 
 Promise.resolve()
 	.then(() => {
-		const { command, argv } = commands([null, 'help', 'update-build-config', 'trigger-downstream-builds']);
+		const { command, argv } = commands([null, ...Object.keys(tool)]);
 		const cmd = tool[command];
 		const options = createOptions(cmd.definitions, argv);
 		const context = { options, argv, tool };
