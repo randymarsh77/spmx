@@ -34,7 +34,10 @@ function updateConfig({ config, pkg, shas }) {
 
 function updateBuildConfig({ owner, configPath }) {
 	return parsePackage(owner)
-		.then(pkg => getResolvedPackageShas({ owner, pkg }).then(shas => ({ shas, pkg })))
+		.then(pkg => getResolvedPackageShas({ owner, pkg }).then(shas => {
+			console.log(`Package has ${shas.length} pulled dependencies`);
+			return { shas, pkg };
+		}))
 		.then(({ shas, pkg }) => getOrCreateConfig({ pkg, owner, configPath, shas })
 			.then(config => ({ shas, pkg, config })))
 		.then(updateConfig)

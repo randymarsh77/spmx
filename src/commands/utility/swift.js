@@ -57,8 +57,14 @@ function parsePulledPackages(owner) {
 				.then(pkg => ({ dir: x, pkg })))));
 }
 
+function packagesDirExists() {
+	return fs.existsSync('Packages');
+}
+
 export function getResolvedPackageShas({ owner, pkg }) {
-	return parsePulledPackages(owner)
-		.then(pulled =>
-			Promise.all(pkg.dependencies.map(x => getPackageRevision(x, pulled))));
+	return !packagesDirExists() ?
+		Promise.resolve([]) :
+		parsePulledPackages(owner)
+			.then(pulled =>
+				Promise.all(pkg.dependencies.map(x => getPackageRevision(x, pulled))));
 }

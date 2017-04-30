@@ -35,9 +35,14 @@ function triggerDownstreamBuilds({ owner, configPath }) {
 	return parsePackage()
 		.then(pkg => getConfig({ name: pkg.name, owner, configPath }))
 		.then(config => config.getContent())
-		.then(content =>
-			(content.downstream || []).reduce((acc, v) =>
-				acc.then(() => trigger(v, owner, configPath, content.name), Promise.resolve())))
+		.then(content => {
+			const downstream = content.downstream || [];
+			console.log(`Package has ${downstream.length} registered dependencies`);
+			return { downstream, name: content.name };
+		})
+		.then(({ downstream, name }) =>
+			downstream.reduce((acc, v) =>
+				acc.then(() => trigger(v, owner, configPath, name), Promise.resolve())))
 		.then(() => ({
 			code: 0,
 		}));

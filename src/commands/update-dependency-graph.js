@@ -67,10 +67,14 @@ function getOrCreateDependentConfigs({ pkg, owner, configPath }) {
 
 function updateDependencyGraph({ owner, configPath }) {
 	return parsePackage(owner)
-		.then(pkg => getOrCreateDependentConfigs({ pkg, owner, configPath })
-			.then(configs => ({ configs, pkg })))
+		.then(pkg => {
+			console.log(`Package has ${pkg.dependencies.length} dependencies`);
+			return getOrCreateDependentConfigs({ pkg, owner, configPath })
+				.then(configs => ({ configs, pkg }));
+		})
 		.then(({ configs, pkg }) =>
-			configs.reduce((acc, v) => acc.then(() => updateConfig({ pkg, v }), Promise.resolve())))
+			configs.reduce((acc, v) => acc.then(() =>
+				updateConfig({ pkg, config: v })), Promise.resolve()))
 		.then(() => ({
 			code: 0,
 		}));
