@@ -3,6 +3,8 @@ import triggerBuild from './utility/travis';
 import { parsePackage } from './utility/swift';
 import { getConfig } from './utility/config';
 
+const currentSha = process.env.TRAVIS_COMMIT;
+
 function trigger({ name, build }, owner, configPath, source) {
 	const { travis } = build;
 	if (!travis) {
@@ -19,7 +21,6 @@ function trigger({ name, build }, owner, configPath, source) {
 			return config.getContent()
 				.then(content => {
 					const lastBuiltSha = (content.upstream.find(x => x.name === source) || {}).sha;
-					const currentSha = 'fromTravisBuild?';
 					if (currentSha !== lastBuiltSha) {
 						console.log('  ... Out of date; Triggering...');
 						return triggerBuild(travis);
