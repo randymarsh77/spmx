@@ -55,7 +55,7 @@ It's a little verbose at the moment,in terms of passing `--owner` and `--configP
   - Note that the exclusion of `www` is intentional. `spm` doesn't have knowledge of the two domains pointing to the same place, so having a mix in your dependencies makes for bad news for consumers with shared dependencies. Just avoid it and prefer the shorter format. (Or, submit a PR, open an issue, etc)
 - No version info is parsed. Conditional triggering is partially broken, but the resulting firehose isn't that detrimental.
   - Parsing versions and then resolving what code actually gets pulled is a next step. One that probably belongs when using `swift` to read the package file works, since the regex parsing would get exponentially more risky and fragile.
-- The tool is still in infancy; If you;re actually using it and come across problems or improvements, feel free to open issues. I might have work planned, but this can help prioritize.
+- The tool is still in infancy; If you're actually using it and come across problems or improvements, feel free to open issues. I might have work planned, but this can help prioritize.
 
 # Future Features
 
