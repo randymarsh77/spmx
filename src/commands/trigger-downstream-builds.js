@@ -1,11 +1,12 @@
 import { globalOptions, repoOptions } from './shared/options';
+import getRevision from './utility/git';
 import triggerBuild from './utility/travis';
 import { parsePackage } from './utility/swift';
 import { getConfig } from './utility/config';
 
-const currentSha = process.env.TRAVIS_COMMIT;
+const travisSha = process.env.TRAVIS_COMMIT;
 
-function trigger({ name, build }, owner, configPath, source) {
+function trigger({ name, build }, owner, configPath, source, force) {
 	const { travis } = build;
 	if (!travis) {
 		console.log(`Skipping trigger for ${name}; No travis slug.`);
@@ -19,10 +20,18 @@ function trigger({ name, build }, owner, configPath, source) {
 				return triggerBuild(travis);
 			}
 			return config.getContent()
-				.then(content => {
+				.then(content => (travisSha ?
+					Promise.resolve({ content, sha: travisSha }) :
+					getRevision('.').then(sha => ({ content, sha }))))
+				.then(({ content, sha }) => {
 					const lastBuiltSha = (content.upstream.find(x => x.name === source) || {}).sha;
-					if (currentSha !== lastBuiltSha) {
+					if (sha !== lastBuiltSha) {
+						console.log(`  ... Current: ${sha} != Last Built: ${lastBuiltSha}`);
 						console.log('  ... Out of date; Triggering...');
+						return triggerBuild(travis);
+					}
+					if (force) {
+						console.log('  ... Force option set; Triggering...');
 						return triggerBuild(travis);
 					}
 					console.log('  ... Up to date; Skipping trigger.');
@@ -31,7 +40,7 @@ function trigger({ name, build }, owner, configPath, source) {
 		});
 }
 
-function triggerDownstreamBuilds({ owner, configPath }) {
+function triggerDownstreamBuilds({ owner, configPath, force }) {
 	return parsePackage()
 		.then(pkg => getConfig({ name: pkg.name, owner, configPath }))
 		.then(config => config.getContent())
@@ -42,7 +51,7 @@ function triggerDownstreamBuilds({ owner, configPath }) {
 		})
 		.then(({ downstream, name }) =>
 			downstream.reduce((acc, v) =>
-				acc.then(() => trigger(v, owner, configPath, name), Promise.resolve())))
+				acc.then(() => trigger(v, owner, configPath, name, force)), Promise.resolve()))
 		.then(() => ({
 			code: 0,
 		}));
@@ -57,6 +66,7 @@ module.exports = {
 	definitions: [
 		...globalOptions.options,
 		...repoOptions.options,
+		{ name: 'force', type: Boolean, description: 'Force triggering of all downstream builds, instead of looking at state.' },
 	],
 	usage: [
 		{
