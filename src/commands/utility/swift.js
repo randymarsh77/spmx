@@ -48,7 +48,6 @@ function parsePulledPackages(owner) {
 	const promise = new Promise((resolve, reject) => {
 		fs.readdir('Packages', (err, items) => {
 			if (err) reject(err);
-			console.log(items);
 			resolve(items);
 		});
 	});
