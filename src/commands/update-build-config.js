@@ -34,7 +34,7 @@ function updateConfig({ config, pkg, shas }) {
 
 function updateBuildConfig({ owner, configPath }) {
 	return parsePackage(owner)
-		.then(pkg => getResolvedPackageShas(pkg).then(shas => ({ shas, pkg })))
+		.then(pkg => getResolvedPackageShas({ owner, pkg }).then(shas => ({ shas, pkg })))
 		.then(({ shas, pkg }) => getOrCreateConfig({ pkg, owner, configPath, shas })
 			.then(config => ({ shas, pkg, config })))
 		.then(updateConfig)
