@@ -1,6 +1,6 @@
 {
   "name": "swiftx",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Extensions for Swift dev",
   "main": "dist/index.js",
   "bin": "./dist/index.js",
