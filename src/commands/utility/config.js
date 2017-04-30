@@ -71,6 +71,6 @@ export function publishNewConfig({ owner, configPath, content }) {
 	});
 }
 
-export function isConfigContentEquivalent() {
-	throw Error('isConfigContentEquivalent not implemented');
+export function isConfigContentEquivalent(a, b) {
+	return JSON.stringify(a) === JSON.stringify(b);
 }
