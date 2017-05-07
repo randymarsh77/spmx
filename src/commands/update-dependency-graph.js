@@ -1,5 +1,5 @@
 import { globalOptions, ownerOption, configPathOption } from './shared/options';
-import { parsePackage } from './utility/swift';
+import { parsePackage } from './utility/swift-package-parser';
 import { createConfig, getAllConfigs, publishNewConfig } from './utility/config';
 
 const build = {};
@@ -66,7 +66,7 @@ function getOrCreateDependentConfigs({ pkg, owner, configPath }) {
 }
 
 function updateDependencyGraph({ owner, configPath }) {
-	return parsePackage(owner)
+	return parsePackage()
 		.then(pkg => {
 			console.log(`Package has ${pkg.dependencies.length} dependencies`);
 			return getOrCreateDependentConfigs({ pkg, owner, configPath })
