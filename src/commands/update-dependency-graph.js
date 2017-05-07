@@ -1,4 +1,4 @@
-import { globalOptions, repoOptions } from './shared/options';
+import { globalOptions, ownerOption, configPathOption } from './shared/options';
 import { parsePackage } from './utility/swift';
 import { createConfig, getAllConfigs, publishNewConfig } from './utility/config';
 
@@ -88,7 +88,8 @@ module.exports = {
 	summary,
 	definitions: [
 		...globalOptions.options,
-		...repoOptions.options,
+		...ownerOption.options,
+		...configPathOption.options,
 	],
 	usage: [
 		{
@@ -100,6 +101,6 @@ module.exports = {
 			content: `$ swiftx ${name} <options>`,
 		},
 	],
-	validate: repoOptions.validate,
+	validate: (x) => ownerOption.validate(x) && configPathOption.validate(x),
 	execute: ({ options }) => updateDependencyGraph(options),
 };

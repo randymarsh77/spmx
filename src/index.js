@@ -10,8 +10,11 @@ Promise.resolve()
 	.then(() => {
 		const { command, argv } = commands([null, ...Object.keys(tool)]);
 		const cmd = tool[command];
-		const options = createOptions(cmd.definitions, argv);
-		const context = { options, argv, tool };
+		const options = {
+			...cmd.populateOptions(),
+			...createOptions(cmd.definitions, argv),
+		};
+		const context = { argv, tool, options };
 		isDebug = options.debug;
 		return { cmd, context };
 	})

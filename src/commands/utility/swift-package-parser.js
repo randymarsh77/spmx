@@ -1,8 +1,8 @@
 import { exec, spawn } from 'child_process';
 
-function getOriginalBuildCommand() {
+function getOriginalBuildCommand(options) {
 	const promise = new Promise((resolve) => {
-		const buildCommand = spawn('sh', ['-c', 'swift build --verbose']);
+		const buildCommand = spawn('sh', ['-c', 'swift build --verbose'], options);
 		buildCommand.stdout.on('data', (data) => {
 			const command = data.toString().split('\n')[0];
 			buildCommand.kill('SIGINT');
@@ -12,9 +12,9 @@ function getOriginalBuildCommand() {
 	return promise;
 }
 
-function getCommandOutput(command) {
+function getCommandOutput(command, options) {
 	const promise = new Promise((resolve, reject) => {
-		exec(command, (error, stdout, stderr) => {
+		exec(command, options, (error, stdout, stderr) => {
 			if (error) reject(stderr);
 			resolve(stdout);
 		});
@@ -22,9 +22,13 @@ function getCommandOutput(command) {
 	return promise;
 }
 
-export default function parsePackage() {
-	return getOriginalBuildCommand()
+function parsePackage(options) {
+	return getOriginalBuildCommand(options)
 		.then(command => command.replace('-fileno 3', '-fileno 1'))
 		.then(command => getCommandOutput(command))
 		.then(result => JSON.parse(result).package);
 }
+
+module.exports = {
+	parsePackage,
+};

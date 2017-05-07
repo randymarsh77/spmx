@@ -10,7 +10,17 @@ function execGit(command, options) {
 	return promise;
 }
 
-export default function getRevision(cwd) {
-	return execGit('rev-parse HEAD', { cwd })
+function getRemoteUrl(options) {
+	return execGit('config --get remote.origin.url', options)
 		.then(sha => sha.trim());
 }
+
+function getRevision(options) {
+	return execGit('rev-parse HEAD', options)
+		.then(sha => sha.trim());
+}
+
+module.exports = {
+	getRemoteUrl,
+	getRevision,
+};

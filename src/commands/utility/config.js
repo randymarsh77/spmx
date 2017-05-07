@@ -16,10 +16,10 @@ function parseConfigPath(configPath) {
 	};
 }
 
-export function createConfig({ owner, name, upstream, downstream }) {
+export function createConfig({ owner, repo, name, upstream, downstream }) {
 	return {
 		name: name.toLowerCase(),
-		source: `${github.swiftx.baseUri}${owner}/${name}`.toLowerCase(),
+		source: `${github.swiftx.baseUri}${owner}/${repo}`.toLowerCase(),
 		upstream,
 		downstream,
 	};

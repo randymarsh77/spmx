@@ -1,8 +1,9 @@
-import { globalOptions, repoOptions } from './shared/options';
-import { parsePackage, getResolvedPackageShas } from './utility/swift';
+import { globalOptions, configPathOption, ownerOption, repoOption } from './shared/options';
+import { getUpstreamState } from './utility/swift';
+import { parsePackage } from './utility/swift-package-parser';
 import { createConfig, getConfig, publishNewConfig, isConfigContentEquivalent } from './utility/config';
 
-function getOrCreateConfig({ owner, configPath, pkg, shas }) {
+function getOrCreateConfig({ owner, repo, configPath, pkg, upstream }) {
 	const getSpecific = () => getConfig({ name: pkg.name, owner, configPath });
 	return getSpecific()
 		.then(config => (config ?
@@ -12,34 +13,36 @@ function getOrCreateConfig({ owner, configPath, pkg, shas }) {
 				configPath,
 				content: createConfig({
 					owner,
+					repo,
 					name: pkg.name,
-					upstream: shas,
+					upstream,
 					downstream: [],
 				}),
 			}).then(getSpecific)));
 }
 
-function updateConfig({ config, pkg, shas }) {
+function updateConfig({ config, pkg, upstream }) {
 	return config.getContent()
 		.then(content => {
 			const updatedContent = {
 				...content,
-				upstream: shas,
+				upstream,
 			};
-			return isConfigContentEquivalent(content, updatedContent) ?
+			console.log('updated: ', updatedContent);
+			return (true && isConfigContentEquivalent(content, updatedContent)) ?
 				Promise.resolve() :
 				config.updateContent(updatedContent, `[SWIFTX-BOT] Updating upstream for ${pkg.name}`);
 		});
 }
 
-function updateBuildConfig({ owner, configPath }) {
-	return parsePackage(owner)
-		.then(pkg => getResolvedPackageShas({ owner, pkg }).then(shas => {
-			console.log(`Package has ${shas.length} pulled dependencies`);
-			return { shas, pkg };
+function updateBuildConfig({ owner, repo, configPath }) {
+	return parsePackage()
+		.then(pkg => getUpstreamState({ pkg }).then(upstream => {
+			console.log(`Package has ${upstream.length} pulled dependencies`);
+			return { upstream, pkg };
 		}))
-		.then(({ shas, pkg }) => getOrCreateConfig({ pkg, owner, configPath, shas })
-			.then(config => ({ shas, pkg, config })))
+		.then(({ upstream, pkg }) => getOrCreateConfig({ pkg, owner, repo, configPath, upstream })
+			.then(config => ({ upstream, pkg, config })))
 		.then(updateConfig)
 		.then(() => ({
 			code: 0,
@@ -54,7 +57,9 @@ module.exports = {
 	summary,
 	definitions: [
 		...globalOptions.options,
-		...repoOptions.options,
+		...configPathOption.options,
+		...repoOption.options,
+		...ownerOption.options,
 	],
 	usage: [
 		{
@@ -66,6 +71,12 @@ module.exports = {
 			content: `$ swiftx ${name} <options>`,
 		},
 	],
-	validate: repoOptions.validate,
+	populateOptions: () => ({
+		...repoOption.populateOptions(),
+		...ownerOption.populateOptions(),
+	}),
+	validate: (x) => repoOption.validate(x)
+		&& ownerOption.validate(x)
+		&& configPathOption.validate(x),
 	execute: ({ options }) => updateBuildConfig(options),
 };

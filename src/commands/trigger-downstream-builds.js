@@ -1,5 +1,5 @@
-import { globalOptions, repoOptions } from './shared/options';
-import getRevision from './utility/git';
+import { globalOptions, ownerOption, configPathOption } from './shared/options';
+import { getRevision } from './utility/git';
 import triggerBuild from './utility/travis';
 import { parsePackage } from './utility/swift';
 import { getConfig } from './utility/config';
@@ -22,7 +22,7 @@ function trigger({ name, build }, owner, configPath, source, force) {
 			return config.getContent()
 				.then(content => (travisSha ?
 					Promise.resolve({ content, sha: travisSha }) :
-					getRevision('.').then(sha => ({ content, sha }))))
+					getRevision().then(sha => ({ content, sha }))))
 				.then(({ content, sha }) => {
 					const lastBuiltSha = (content.upstream.find(x => x.name === source) || {}).sha;
 					if (sha !== lastBuiltSha) {
@@ -65,7 +65,8 @@ module.exports = {
 	summary,
 	definitions: [
 		...globalOptions.options,
-		...repoOptions.options,
+		...ownerOption.options,
+		...configPathOption,
 		{ name: 'force', type: Boolean, description: 'Force triggering of all downstream builds, instead of looking at state.' },
 	],
 	usage: [
@@ -78,6 +79,6 @@ module.exports = {
 			content: `$ swiftx ${name} <options>`,
 		},
 	],
-	validate: repoOptions.validate,
+	validate: (x) => ownerOption.validate(x) && configPathOption.validate(x),
 	execute: ({ options }) => triggerDownstreamBuilds(options),
 };
