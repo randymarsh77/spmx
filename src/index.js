@@ -11,7 +11,7 @@ Promise.resolve()
 		const { command, argv } = commands([null, ...Object.keys(tool)]);
 		const cmd = tool[command];
 		const options = {
-			...cmd.populateOptions(),
+			...((cmd.populateOptions && cmd.populateOptions()) || {}),
 			...createOptions(cmd.definitions, argv),
 		};
 		const context = { argv, tool, options };
