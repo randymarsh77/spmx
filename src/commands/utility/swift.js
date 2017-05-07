@@ -3,9 +3,6 @@ import { getRemoteUrl, getRevision } from './git';
 import { parsePackage } from './swift-package-parser';
 
 function getPackageState({ url, version }, pulledPackages) {
-	// fetch url/Package.swift blob,
-	// parse to get name? can't parse package without being stored locally
-	// or... use pulled package upstream to get url where pulled from... yes
 	const pkg = pulledPackages.find(x => x.url.toLowerCase() === url.toLowerCase());
 	if (!pkg) {
 		console.warn(`No pulled package sourced from ${url}; Revision data will not be configured.`);
@@ -50,6 +47,42 @@ function getUpstreamState({ pkg }) {
 		.then(pulled => pkg.dependencies.map(x => getPackageState(x, pulled)));
 }
 
+function tagArray(tag) {
+	return tag.split('.');
+}
+
+function tagGreaterThanOrEqualTo(a, b) {
+	const maxLength = Math.max(a.length, b.length);
+	for (let i = 0; i < maxLength; i++) {
+		if (a[i] < b[i]) return false;
+	}
+	return true;
+}
+
+function tagLessThanOrEqualTo(a, b) {
+	const maxLength = Math.max(a.length, b.length);
+	for (let i = 0; i < maxLength; i++) {
+		if (a[i] > b[i]) return false;
+	}
+	return true;
+}
+
+function resolveTag(version, tags) {
+	const { lowerBound, upperBound } = version;
+	const lowest = tagArray(lowerBound);
+	const highest = tagArray(upperBound);
+	const resolved = tags.reduce((cur, tag) => {
+		const tagData = tagArray(tag);
+		const curData = cur && tagArray(cur);
+		const tagWithinRange = tagGreaterThanOrEqualTo(tagData, lowest)
+			&& tagLessThanOrEqualTo(tagData, highest);
+		const tagGreaterThanCur = !curData || tagGreaterThanOrEqualTo(tagData, curData);
+		return tagGreaterThanCur && tagWithinRange;
+	}, null);
+	return resolved;
+}
+
 module.exports = {
 	getUpstreamState,
+	resolveTag,
 };

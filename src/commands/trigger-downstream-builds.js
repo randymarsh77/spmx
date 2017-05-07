@@ -1,7 +1,8 @@
 import { globalOptions, ownerOption, configPathOption } from './shared/options';
-import { getRevision } from './utility/git';
+import { getRevision, getTags } from './utility/git';
 import triggerBuild from './utility/travis';
-import { parsePackage } from './utility/swift';
+import { resolveTag } from './utility/swift';
+import { parsePackage } from './utility/swift-package-parser';
 import { getConfig } from './utility/config';
 
 const travisSha = process.env.TRAVIS_COMMIT;
@@ -11,6 +12,10 @@ function trigger({ name, build }, owner, configPath, source, force) {
 	if (!travis) {
 		console.log(`Skipping trigger for ${name}; No travis slug.`);
 		return Promise.resolve();
+	}
+	if (force) {
+		console.log('  ... Force option set; Triggering...');
+		return triggerBuild(travis);
 	}
 	console.log(`Evaluating status of ${name}`);
 	return getConfig({ owner, configPath, name })
@@ -25,17 +30,31 @@ function trigger({ name, build }, owner, configPath, source, force) {
 					getRevision().then(sha => ({ content, sha }))))
 				.then(({ content, sha }) => {
 					const lastBuiltSha = (content.upstream.find(x => x.name === source) || {}).sha;
-					if (sha !== lastBuiltSha) {
-						console.log(`  ... Current: ${sha} != Last Built: ${lastBuiltSha}`);
-						console.log('  ... Out of date; Triggering...');
+					if (sha === lastBuiltSha) {
+						console.log('  ... Up to date; Skipping trigger.');
+						return Promise.resolve();
+					}
+
+					const { version } = content;
+					if (!version) {
+						console.log(`  ... No version data and Current: ${sha} != Last Built: ${lastBuiltSha}`);
+						console.log('  ... Status unknown; Triggering...');
 						return triggerBuild(travis);
 					}
-					if (force) {
-						console.log('  ... Force option set; Triggering...');
-						return triggerBuild(travis);
-					}
-					console.log('  ... Up to date; Skipping trigger.');
-					return Promise.resolve();
+
+					return getTags()
+						.then(tags => resolveTag(version, tags))
+						.then(tag => {
+							console.log(`  ... Resolved version to ${tag.version}`);
+							if (tag.sha !== lastBuiltSha) {
+								console.log(`  ... Resolved tag: ${tag.version} at ${sha} != Last Built: ${lastBuiltSha}`);
+								console.log('  ... Out of date; Triggering...');
+								return triggerBuild(travis);
+							}
+
+							console.log('  ... Up to date; Skipping trigger.');
+							return Promise.resolve();
+						});
 				});
 		});
 }
@@ -79,6 +98,9 @@ module.exports = {
 			content: `$ swiftx ${name} <options>`,
 		},
 	],
+	populateOptions: () => ({
+		...ownerOption.populateOptions(),
+	}),
 	validate: (x) => ownerOption.validate(x) && configPathOption.validate(x),
 	execute: ({ options }) => triggerDownstreamBuilds(options),
 };

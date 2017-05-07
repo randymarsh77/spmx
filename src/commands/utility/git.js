@@ -20,7 +20,19 @@ function getRevision(options) {
 		.then(sha => sha.trim());
 }
 
+function getTags(options) {
+	return execGit('show-ref --tags', options)
+		.then(data => data.split('/n'))
+		.then(lines => lines.map(x => x.split(' ')))
+		.then(data => data.map(x => {
+			const sha = x[0];
+			const tag = x[1].replace('refs/tags/', '');
+			return { sha, tag };
+		}));
+}
+
 module.exports = {
 	getRemoteUrl,
 	getRevision,
+	getTags,
 };
