@@ -1,4 +1,5 @@
 import { globalOptions, ownerOption, configPathOption } from './shared/options';
+import { getUpstreamState } from './utility/swift';
 import { parsePackage } from './utility/swift-package-parser';
 import { createConfig, getAllConfigs, publishNewConfig } from './utility/config';
 
@@ -7,11 +8,11 @@ if (process.env.TRAVIS_REPO_SLUG) {
 	build.travis = process.env.TRAVIS_REPO_SLUG;
 }
 
-function updateConfig({ pkg, config }) {
+function updateConfig({ pkg, dependencies, config }) {
 	return config.getContent()
 		.then(content => {
 			console.log(`Processing config update for ${content.name}`);
-			const needsReference = pkg.dependencies.find(x => x.name === content.name);
+			const needsReference = dependencies.find(x => x.name === content.name);
 			const hasReference = content.downstream.find(x => x.name === pkg.name);
 			if (needsReference && !hasReference) {
 				console.log('  ... Adding reference');
@@ -36,10 +37,10 @@ function updateConfig({ pkg, config }) {
 		});
 }
 
-function getOrCreateDependentConfigs({ pkg, owner, configPath }) {
+function getOrCreateDependentConfigs({ pkg, dependencies, owner, configPath }) {
 	return getAllConfigs({ owner, configPath })
 		.then(existingConfigs => {
-			const missingConfigs = pkg.dependencies
+			const missingConfigs = dependencies
 				.filter(x => !existingConfigs.find(({ meta }) =>
 					meta.path.toLowerCase().endsWith(`${x.name}.json`.toLowerCase())));
 
@@ -48,8 +49,8 @@ function getOrCreateDependentConfigs({ pkg, owner, configPath }) {
 					owner,
 					configPath,
 					content: createConfig({
-						owner,
 						name: x.name,
+						source: x.url,
 						upstream: [],
 						downstream: [{ name: pkg.name, build }],
 					}),
@@ -60,21 +61,23 @@ function getOrCreateDependentConfigs({ pkg, owner, configPath }) {
 		.then(() => getAllConfigs({
 			owner,
 			configPath,
-			predicate: (x) => pkg.dependencies.find(dependency =>
+			predicate: (x) => dependencies.find(dependency =>
 				x.path.toLowerCase().endsWith(`${dependency.name}.json`.toLowerCase())),
 		}));
 }
 
 function updateDependencyGraph({ owner, configPath }) {
 	return parsePackage()
-		.then(pkg => {
-			console.log(`Package has ${pkg.dependencies.length} dependencies`);
-			return getOrCreateDependentConfigs({ pkg, owner, configPath })
-				.then(configs => ({ configs, pkg }));
-		})
-		.then(({ configs, pkg }) =>
+		.then(pkg => getUpstreamState({ pkg }).then(dependencies => {
+			console.log(`Package has ${dependencies.length} pulled dependenc${dependencies.length === 1 ? 'y' : 'ies'}`);
+			return { dependencies, pkg };
+		}))
+		.then(({ dependencies, pkg }) =>
+			getOrCreateDependentConfigs({ pkg, dependencies, owner, configPath })
+				.then(configs => ({ configs, pkg, dependencies })))
+		.then(({ configs, pkg, dependencies }) =>
 			configs.reduce((acc, v) => acc.then(() =>
-				updateConfig({ pkg, config: v })), Promise.resolve()))
+				updateConfig({ pkg, dependencies, config: v })), Promise.resolve()))
 		.then(() => ({
 			code: 0,
 		}));
@@ -101,6 +104,9 @@ module.exports = {
 			content: `$ swiftx ${name} <options>`,
 		},
 	],
+	populateOptions: () => ({
+		...ownerOption.populateOptions(),
+	}),
 	validate: (x) => ownerOption.validate(x) && configPathOption.validate(x),
 	execute: ({ options }) => updateDependencyGraph(options),
 };

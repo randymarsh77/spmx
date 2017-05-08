@@ -67,17 +67,22 @@ function tagLessThanOrEqualTo(a, b) {
 	return true;
 }
 
+function isValidVersionTag(tag) {
+	const parts = tag.tag.split('.');
+	return parts && parts.length !== 0 && parts.every(x => !isNaN(x));
+}
+
 function resolveTag(version, tags) {
 	const { lowerBound, upperBound } = version;
 	const lowest = tagArray(lowerBound);
 	const highest = tagArray(upperBound);
-	const resolved = tags.reduce((cur, tag) => {
-		const tagData = tagArray(tag);
-		const curData = cur && tagArray(cur);
+	const resolved = tags.filter(isValidVersionTag).reduce((cur, tag) => {
+		const tagData = tagArray(tag.tag);
+		const curData = cur && tagArray(cur.tag);
 		const tagWithinRange = tagGreaterThanOrEqualTo(tagData, lowest)
 			&& tagLessThanOrEqualTo(tagData, highest);
 		const tagGreaterThanCur = !curData || tagGreaterThanOrEqualTo(tagData, curData);
-		return tagGreaterThanCur && tagWithinRange;
+		return tagGreaterThanCur && tagWithinRange ? tag : cur;
 	}, null);
 	return resolved;
 }

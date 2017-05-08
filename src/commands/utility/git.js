@@ -22,8 +22,8 @@ function getRevision(options) {
 
 function getTags(options) {
 	return execGit('show-ref --tags', options)
-		.then(data => data.split('/n'))
-		.then(lines => lines.map(x => x.split(' ')))
+		.then(data => data.split('\n'))
+		.then(lines => lines.filter(x => x.length > 0).map(x => x.split(' ')))
 		.then(data => data.map(x => {
 			const sha = x[0];
 			const tag = x[1].replace('refs/tags/', '');

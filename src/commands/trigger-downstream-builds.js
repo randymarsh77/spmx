@@ -29,25 +29,29 @@ function trigger({ name, build }, owner, configPath, source, force) {
 					Promise.resolve({ content, sha: travisSha }) :
 					getRevision().then(sha => ({ content, sha }))))
 				.then(({ content, sha }) => {
-					const lastBuiltSha = (content.upstream.find(x => x.name === source) || {}).sha;
+					const state = (content.upstream.find(x => x.name === source) || {});
+					const lastBuiltSha = state.sha;
 					if (sha === lastBuiltSha) {
 						console.log('  ... Up to date; Skipping trigger.');
 						return Promise.resolve();
 					}
 
-					const { version } = content;
+					const { version } = state;
 					if (!version) {
 						console.log(`  ... No version data and Current: ${sha} != Last Built: ${lastBuiltSha}`);
 						console.log('  ... Status unknown; Triggering...');
-						return triggerBuild(travis);
+						return Promise.resolve();
+						// return triggerBuild(travis);
 					}
+
+					console.log('get tags');
 
 					return getTags()
 						.then(tags => resolveTag(version, tags))
 						.then(tag => {
-							console.log(`  ... Resolved version to ${tag.version}`);
+							console.log(`  ... Resolved version to ${tag.tag}`);
 							if (tag.sha !== lastBuiltSha) {
-								console.log(`  ... Resolved tag: ${tag.version} at ${sha} != Last Built: ${lastBuiltSha}`);
+								console.log(`  ... Resolved tag: ${tag.tag} at ${tag.sha} != Last Built: ${lastBuiltSha}`);
 								console.log('  ... Out of date; Triggering...');
 								return triggerBuild(travis);
 							}
@@ -85,7 +89,7 @@ module.exports = {
 	definitions: [
 		...globalOptions.options,
 		...ownerOption.options,
-		...configPathOption,
+		...configPathOption.options,
 		{ name: 'force', type: Boolean, description: 'Force triggering of all downstream builds, instead of looking at state.' },
 	],
 	usage: [
