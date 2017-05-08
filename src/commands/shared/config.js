@@ -9,5 +9,5 @@ function readConfig() {
 const data = readConfig();
 
 module.exports = {
-	getOption: (option) => data.options[option],
+	getOption: (option) => data && data.options && data.options[option],
 };
