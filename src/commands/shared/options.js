@@ -1,3 +1,5 @@
+import config from './config';
+
 const globalOptions = {
 	options: [
 		{ name: 'debug', alias: 'd', type: Boolean, description: 'Run in debug mode.' },
@@ -8,6 +10,10 @@ const configPathOption = {
 	options: [
 		{ name: 'configPath', type: String, description: 'The build config repo and subpath. Example: "builds/swift/config" will look for name.json in the builds repo at the path swift/config/name.json.' },
 	],
+	populateOptions: () => {
+		const configPath = config.getOption('configPath');
+		return configPath ? { configPath } : {};
+	},
 	validate: ({ options }) => {
 		const { configPath } = options;
 		if (!configPath) throw new Error('Must include the configPath option.');

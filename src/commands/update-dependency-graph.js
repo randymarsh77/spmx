@@ -106,6 +106,7 @@ module.exports = {
 	],
 	populateOptions: () => ({
 		...ownerOption.populateOptions(),
+		...configPathOption.populateOptions(),
 	}),
 	validate: (x) => ownerOption.validate(x) && configPathOption.validate(x),
 	execute: ({ options }) => updateDependencyGraph(options),
