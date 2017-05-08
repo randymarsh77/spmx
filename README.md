@@ -23,41 +23,36 @@ node_js:
 
 before_script:
   - npm install -g swiftx
+  - export SWIFTX_CONFIG_PATH=builds/swift/config
 
 script:
   - swift build
 
 after_success:
-  - swiftx update-build-config --owner randymarsh77 --configPath builds/swift/config
-  - swiftx update-dependency-graph --owner randymarsh77 --configPath builds/swift/config
-  - swiftx trigger-downstream-builds --owner randymarsh77 --configPath builds/swift/config
+  - swiftx update-build-config
+  - swiftx update-dependency-graph
+  - swiftx trigger-downstream-builds
 
 after_failure:
-  - swiftx trigger-downstream-builds --owner randymarsh77 --configPath builds/swift/config --force
+  - swiftx trigger-downstream-builds --force
 ```
 
 ### Notes
 
-It's a little verbose at the moment,in terms of passing `--owner` and `--configPath` for each command, and for doing all three commands instead of just one or two. This might change in the future.
-
-`update-build-config` saves the state (sha) of the package dependencies that were built, similar to a `yarn.lock` file (but, not really the same at all).
+`update-build-config` saves the state (sha) of the package dependencies that were built, similar to a `yarn.lock` file except used for a different purpose.
 
 `update-dependency-graph` registers this package as a dependency of upstream builds. Or, removes the dependency if it's no longer valid.
 
-`trigger-downstream-builds` ... ya.
+`trigger-downstream-builds` ... ya. The trigger occurs if `swift build` will resolve the dependency to a newer version than that which has been built.
 
 `after_failure` uses `--force` because this failure might impact any downstream builds, so lets just make sure we build them.
 
 ### Caveats (Troubleshooting)
 
-- `Package.swift` dependencies are required to be specified as `https://github.com/${owner}/...`.
-  - This was just an easy regex to write, before I use actual `swift` interpreter to read and spit out json.
-  - Note that the exclusion of `www` is intentional. `spm` doesn't have knowledge of the two domains pointing to the same place, so having a mix in your dependencies makes for bad news for consumers with shared dependencies. Just avoid it and prefer the shorter format. (Or, submit a PR, open an issue, etc)
-- No version info is parsed. Conditional triggering is partially broken, but the resulting firehose isn't that detrimental.
-  - Parsing versions and then resolving what code actually gets pulled is a next step. One that probably belongs when using `swift` to read the package file works, since the regex parsing would get exponentially more risky and fragile.
-- The tool is still in infancy; If you're actually using it and come across problems or improvements, feel free to open issues. I might have work planned, but this can help prioritize.
+- The tool has not yet hit 1.0, but it is stabilizing.
+- No deduplication of multiple versions of pulled packages. IE, if `Packages` is not cleaned before script execution and `pack1-1.0.0` and `pack1-1.0.1` exist, behavior is undefined. This shouldn't be a problem for CI builds.
 
 # Future Features
 
-Add `link` using a global-per-user `.swiftx` json registry. Xcode handles symlinked packages, `swift build` does not. `link` will need to operate in either `--soft` or `--hard` mode, relating to a simple symlink relation for Xcode development, or actual (automated) modifications to Package.swift files.
-
+- Add `link` using a global-per-user `.swiftx` json registry. Xcode handles symlinked packages, `swift build` does not. `link` will need to operate in either `--soft` or `--hard` mode, relating to a simple symlink relation for Xcode development, or actual (automated) modifications to Package.swift files.
+- Add shrinkwrapping for when you need to lock in state.
