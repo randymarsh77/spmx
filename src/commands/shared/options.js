@@ -11,7 +11,7 @@ const configPathOption = {
 		{ name: 'configPath', type: String, description: 'The build config repo and subpath. Example: "builds/swift/config" will look for name.json in the builds repo at the path swift/config/name.json.' },
 	],
 	populateOptions: () => {
-		const configPath = config.getOption('configPath');
+		const configPath = process.env.SWIFTX_CONFIG_PATH || config.getOption('configPath');
 		return configPath ? { configPath } : {};
 	},
 	validate: ({ options }) => {
