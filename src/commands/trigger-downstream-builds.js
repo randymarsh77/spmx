@@ -40,8 +40,7 @@ function trigger({ name, build }, owner, configPath, source, force) {
 					if (!version) {
 						console.log(`  ... No version data and Current: ${sha} != Last Built: ${lastBuiltSha}`);
 						console.log('  ... Status unknown; Triggering...');
-						return Promise.resolve();
-						// return triggerBuild(travis);
+						return triggerBuild(travis);
 					}
 
 					console.log('get tags');
