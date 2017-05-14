@@ -4,6 +4,7 @@ import help from './commands/help';
 import triggerDownstreamBuilds from './commands/trigger-downstream-builds';
 import updateBuildConfig from './commands/update-build-config';
 import updateDependencyGraph from './commands/update-dependency-graph';
+import link from './commands/link';
 import { globalOptions } from './commands/shared/options';
 
 const commands = [
@@ -11,6 +12,7 @@ const commands = [
 	updateBuildConfig,
 	updateDependencyGraph,
 	triggerDownstreamBuilds,
+	link,
 ];
 
 module.exports = {
